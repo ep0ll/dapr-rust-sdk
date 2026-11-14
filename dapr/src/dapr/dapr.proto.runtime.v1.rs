@@ -3122,12 +3122,15 @@ pub struct SubscribeTopicEventsRequestInitialAlpha1 {
     /// are sent.
     #[prost(string, optional, tag = "4")]
     pub dead_letter_topic: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(message, optional, tag = "5")]
+    pub bulk_subscribe: ::core::option::Option<BulkSubscribeConfig>,
 }
 /// SubscribeTopicEventsRequestProcessedAlpha1 is the message containing the
 /// subscription to a topic.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct SubscribeTopicEventsRequestProcessedAlpha1 {
-    /// id is the unique identifier for the subscription request.
+    /// ID of the delivery being acknowledged (event ID for single deliveries,
+    /// delivery ID for bulk entries).
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
     /// status is the result of the subscription request.
@@ -3145,6 +3148,9 @@ pub struct SubscribeTopicEventsResponseAlpha1 {
     pub subscribe_topic_events_response_type: ::core::option::Option<
         subscribe_topic_events_response_alpha1::SubscribeTopicEventsResponseType,
     >,
+    /// Batch deliveries over the streaming subscription.
+    #[prost(message, repeated, tag = "3")]
+    pub event_messages: ::prost::alloc::vec::Vec<SubscribeTopicEventsBulkEntryAlpha1>,
 }
 /// Nested message and enum types in `SubscribeTopicEventsResponseAlpha1`.
 pub mod subscribe_topic_events_response_alpha1 {
@@ -3160,6 +3166,19 @@ pub mod subscribe_topic_events_response_alpha1 {
 /// when subscribing to a topic.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct SubscribeTopicEventsResponseInitialAlpha1 {}
+
+/// SubscribeTopicEventsBulkEntryAlpha1 wraps an original bulk entry with a
+/// unique streaming delivery ID used for acknowledgement correlation.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubscribeTopicEventsBulkEntryAlpha1 {
+    /// Unique ID for the individual streaming delivery.
+    #[prost(string, tag = "1")]
+    pub delivery_id: ::prost::alloc::string::String,
+    /// Original bulk subscription entry.
+    #[prost(message, optional, tag = "2")]
+    pub entry: ::core::option::Option<TopicEventBulkRequestEntry>,
+}
+
 /// InvokeServiceRequest represents the request message for Service invocation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct InvokeServiceRequest {
