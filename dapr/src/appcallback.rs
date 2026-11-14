@@ -170,24 +170,31 @@ impl AppCallback for AppCallbackService {
         request: Request<runtime::v1::JobEventRequest>,
     ) -> Result<Response<runtime::v1::JobEventResponse>, Status> {
         let request_inner = request.into_inner();
-        let job_name = if !request_inner.name.is_empty() {
+        let job_route = if let Some(route_path) = request_inner.method.strip_prefix("job/") {
+            if route_path.is_empty() {
+                return Err(Status::invalid_argument(
+                    "job callback method must include a non-empty route path",
+                ));
+            }
+            route_path.to_string()
+        } else if !request_inner.name.is_empty() {
+            // Older runtimes may not populate method; retain name-based dispatch.
             request_inner.name.clone()
-        } else if let Some(stripped) = request_inner.method.strip_prefix("job/") {
-            stripped.to_string()
         } else {
             return Err(Status::invalid_argument(format!(
-                "cannot determine job name from request (method={:?})",
+                "cannot determine job callback route from request (method={:?}, name={:?})",
                 request_inner.method,
+                request_inner.name,
             )));
         };
 
-        if let Some(handler) = self.job_handlers.get(&job_name) {
+        if let Some(handler) = self.job_handlers.get(&job_route) {
             let handle_response = handler.handler(request_inner).await;
             handle_response.map(Response::new)
         } else {
             Err(Status::not_found(format!(
-                "no handler registered for job {:?}",
-                job_name,
+                "no handler registered for job route {:?}",
+                job_route,
             )))
         }
     }

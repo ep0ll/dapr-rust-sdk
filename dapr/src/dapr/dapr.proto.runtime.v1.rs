@@ -3939,6 +3939,10 @@ pub struct Job {
     pub failure_policy: ::core::option::Option<
         super::super::common::v1::JobFailurePolicy,
     >,
+    /// override_route_path optionally overrides the app callback path under /job/.
+    /// The job name remains unchanged. If omitted, the job name is used as the path.
+    #[prost(string, optional, tag = "8")]
+    pub override_route_path: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// ScheduleJobRequest is the message to create/schedule the job.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]

@@ -73,6 +73,11 @@ message Job {
 
   // failure_policy is the optional policy for handling job failures.
   optional common.v1.JobFailurePolicy failure_policy = 7 [json_name = "failurePolicy"];
+
+  // override_route_path optionally overrides the app callback path under /job/.
+  // The job name remains unchanged. If omitted, the job name is used as the path.
+  // The value must be a non-empty relative HTTP path without leading or trailing slashes.
+  optional string override_route_path = 8 [json_name = "overrideRoutePath"];
 }
 
 // ScheduleJobRequest is the message to create/schedule the job.

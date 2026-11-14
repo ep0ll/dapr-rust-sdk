@@ -54,10 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut callback_service = AppCallbackService::new();
 
-        let backup_job_handler_name = "prod-db-backup";
+        let backup_job_handler_route = "database/backup";
         add_job_handler!(
             callback_service,
-            backup_job_handler_name,
+            backup_job_handler_route,
             backup_job_handler
         );
 
@@ -103,6 +103,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let job = JobBuilder::new("prod-db-backup")
         .with_schedule("@every 1s")
         .with_data(any)
+        .with_override_route_path("database/backup")
         .build();
 
     let _schedule_resp = client.schedule_job(job, None).await?;

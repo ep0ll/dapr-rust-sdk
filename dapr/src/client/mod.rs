@@ -1689,6 +1689,7 @@ pub struct JobBuilder {
     repeats: Option<u32>,
     due_time: Option<String>,
     failure_policy: Option<JobFailurePolicy>,
+    override_route_path: Option<String>,
 }
 
 impl JobBuilder {
@@ -1702,6 +1703,7 @@ impl JobBuilder {
             repeats: None,
             due_time: None,
             failure_policy: None,
+            override_route_path: None,
         }
     }
 
@@ -1735,6 +1737,15 @@ impl JobBuilder {
         self
     }
 
+    /// Override the callback path used to deliver this job under /job/.
+    ///
+    /// This does not change the job name, which remains the scheduler identity.
+    /// The path must be relative and must not start or end with a slash.
+    pub fn with_override_route_path(mut self, route_path: &str) -> Self {
+        self.override_route_path = Some(route_path.into());
+        self
+    }
+
     pub fn build(self) -> Job {
         Job {
             schedule: self.schedule,
@@ -1744,6 +1755,7 @@ impl JobBuilder {
             repeats: self.repeats,
             due_time: self.due_time,
             failure_policy: self.failure_policy,
+            override_route_path: self.override_route_path,
         }
     }
 }

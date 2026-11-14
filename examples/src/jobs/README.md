@@ -1,6 +1,8 @@
 # Jobs Example
 
-This is a simple example that demonstrates Dapr's job scheduling capabilities.
+This is a simple example that demonstrates Dapr's job scheduling capabilities, including overriding the callback path without changing the scheduler job name.
+
+The backup job is stored under the name prod-db-backup, but its callback is delivered to the handler registered at /job/database/backup. Register the handler using the override path, not the scheduler job name.
 
 ## Running
 
