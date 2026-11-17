@@ -67,7 +67,8 @@ pub use context::{
     ActivityContext, ActivityContextExt, RegistryExt, WorkflowContext, WorkflowContextExt,
 };
 pub use options::{
-    ActivityOptions, EventOptions, FetchOptions, ScheduleOptions, SubWorkflowOptions,
+    ActivityOptions, EventOptions, FetchOptions, RaiseErrorOptions, ScheduleOptions,
+    SubWorkflowOptions,
 };
 
 pub use dapr_durabletask::api::{

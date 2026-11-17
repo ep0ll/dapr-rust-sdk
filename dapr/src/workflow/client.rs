@@ -7,7 +7,7 @@ use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use tonic::transport::Channel;
 
-use super::options::{EventOptions, FetchOptions, ScheduleOptions};
+use super::options::{EventOptions, FetchOptions, RaiseErrorOptions, ScheduleOptions};
 
 /// Client for scheduling and managing Dapr workflow instances.
 pub struct WorkflowClient {
@@ -138,6 +138,25 @@ impl WorkflowClient {
         options: EventOptions,
     ) -> Result<()> {
         raise_event_impl(&mut self.inner, instance_id, event_name, options).await
+    }
+
+    /// Raise an error to a workflow instance waiting for an external event.
+    ///
+    /// The oldest matching wait fails with the supplied structured failure details.
+    /// The error is buffered when the workflow has not registered a matching wait yet.
+    ///
+    /// # Arguments
+    ///
+    /// * `instance_id` - ID of the workflow instance to raise the error on.
+    /// * `event_name` - Name of the external event wait to fail.
+    /// * `options` - Raise-error options including failure details and app-id routing.
+    pub async fn raise_error(
+        &mut self,
+        instance_id: &str,
+        event_name: &str,
+        options: RaiseErrorOptions,
+    ) -> Result<()> {
+        raise_error_impl(&mut self.inner, instance_id, event_name, options).await
     }
 
     /// Fetch workflow metadata, optionally including inputs and outputs.
@@ -350,6 +369,25 @@ impl WorkflowSchedulingClient {
         raise_event_impl(&mut self.inner, instance_id, event_name, options).await
     }
 
+    /// Raise an error to a workflow instance waiting for an external event.
+    ///
+    /// The oldest matching wait fails with the supplied structured failure details.
+    /// The error is buffered when the workflow has not registered a matching wait yet.
+    ///
+    /// # Arguments
+    ///
+    /// * `instance_id` - ID of the workflow instance to raise the error on.
+    /// * `event_name` - Name of the external event wait to fail.
+    /// * `options` - Raise-error options including failure details and app-id routing.
+    pub async fn raise_error(
+        &mut self,
+        instance_id: &str,
+        event_name: &str,
+        options: RaiseErrorOptions,
+    ) -> Result<()> {
+        raise_error_impl(&mut self.inner, instance_id, event_name, options).await
+    }
+
     /// Fetch workflow metadata, optionally including inputs and outputs.
     pub async fn fetch_workflow_metadata(
         &mut self,
@@ -542,6 +580,21 @@ async fn raise_event_impl(
 ) -> Result<()> {
     client
         .raise_orchestration_event(instance_id, event_name, options.payload_json()?)
+        .await
+}
+
+async fn raise_error_impl(
+    client: &mut TaskHubGrpcClient,
+    instance_id: &str,
+    event_name: &str,
+    options: RaiseErrorOptions,
+) -> Result<()> {
+    client
+        .raise_orchestration_error_with_options(
+            instance_id,
+            event_name,
+            options.into_durabletask(),
+        )
         .await
 }
 

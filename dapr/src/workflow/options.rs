@@ -312,6 +312,48 @@ impl EventOptions {
     }
 }
 
+/// Options for raising an error to a workflow instance.
+#[derive(Debug, Clone, Default)]
+pub struct RaiseErrorOptions {
+    /// Structured failure details delivered to the matching external-event wait.
+    pub failure_details: Option<dapr_durabletask::api::FailureDetails>,
+    /// Raise the error on the instance owned by the app with this app ID.
+    pub app_id: Option<String>,
+}
+
+impl RaiseErrorOptions {
+    /// Create an empty set of raise-error options.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the structured failure details.
+    pub fn with_failure_details(
+        mut self,
+        failure_details: dapr_durabletask::api::FailureDetails,
+    ) -> Self {
+        self.failure_details = Some(failure_details);
+        self
+    }
+
+    /// Target the instance owned by the app with the given app ID.
+    pub fn with_app_id(mut self, app_id: impl Into<String>) -> Self {
+        self.app_id = Some(app_id.into());
+        self
+    }
+
+    pub(crate) fn into_durabletask(self) -> dapr_durabletask::client::RaiseErrorOptions {
+        let mut options = dapr_durabletask::client::RaiseErrorOptions::new();
+        if let Some(details) = self.failure_details {
+            options = options.with_failure_details(details);
+        }
+        if let Some(app_id) = self.app_id {
+            options = options.with_app_id(app_id);
+        }
+        options
+    }
+}
+
 /// Options for fetching workflow metadata.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FetchOptions {
@@ -399,6 +441,47 @@ mod tests {
     #[test]
     fn schedule_options_start_time_utc_none_by_default() {
         assert!(ScheduleOptions::new().start_time_utc().is_none());
+    }
+
+    #[test]
+    fn raise_error_options_default_to_no_failure_details() {
+        let options = RaiseErrorOptions::new();
+        assert!(options.failure_details.is_none());
+        assert!(options.app_id.is_none());
+    }
+
+    #[test]
+    fn raise_error_options_carry_failure_details_and_app_id() {
+        let options = RaiseErrorOptions::new()
+            .with_failure_details(dapr_durabletask::api::FailureDetails {
+                message: "".into(),
+                error_type: "ApprovalRejected".into(),
+                stack_trace: Some("at workflow.rs:42".into()),
+            })
+            .with_app_id("worker-app");
+
+        let details = options.failure_details.as_ref().expect("failure details missing");
+        assert_eq!(details.message, "");
+        assert_eq!(details.error_type, "ApprovalRejected");
+        assert_eq!(details.stack_trace.as_deref(), Some("at workflow.rs:42"));
+        assert_eq!(options.app_id.as_deref(), Some("worker-app"));
+    }
+
+    #[test]
+    fn raise_error_options_lower_to_durabletask_options() {
+        let options = RaiseErrorOptions::new()
+            .with_failure_details(dapr_durabletask::api::FailureDetails {
+                message: "approval rejected".into(),
+                error_type: "ApprovalRejected".into(),
+                stack_trace: Some("at workflow.rs:42".into()),
+            })
+            .with_app_id("worker-app");
+        let lower = options.into_durabletask();
+        let details = lower.failure_details.expect("failure details missing");
+        assert_eq!(details.message, "approval rejected");
+        assert_eq!(details.error_type, "ApprovalRejected");
+        assert_eq!(details.stack_trace.as_deref(), Some("at workflow.rs:42"));
+        assert_eq!(lower.app_id.as_deref(), Some("worker-app"));
     }
 
     #[test]
